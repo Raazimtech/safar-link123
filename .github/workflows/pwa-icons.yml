@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'favicon.svg'
+      - 'manifest.webmanifest'
       - '.github/workflows/pwa-icons.yml'
 
 permissions:
