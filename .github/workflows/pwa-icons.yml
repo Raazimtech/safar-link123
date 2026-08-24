@@ -1,0 +1,31 @@
+name: Generate PWA icons
+
+on:
+  push:
+    paths:
+      - 'favicon.svg'
+      - '.github/workflows/pwa-icons.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  icons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate PNG app icons from the existing favicon
+        run: |
+          mkdir -p icons
+          convert -background none favicon.svg -resize 192x192 icons/icon-192.png
+          convert -background none favicon.svg -resize 512x512 icons/icon-512.png
+          convert -background none favicon.svg -resize 512x512 icons/icon-512-maskable.png
+
+      - name: Commit generated icons
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add icons/icon-192.png icons/icon-512.png icons/icon-512-maskable.png
+          git diff --cached --quiet || git commit -m 'Generate PNG PWA icons'
+          git push
