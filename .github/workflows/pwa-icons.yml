@@ -4,8 +4,8 @@ on:
   push:
     paths:
       - 'favicon.svg'
-      - 'manifest.webmanifest'
       - '.github/workflows/pwa-icons.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -18,10 +18,19 @@ jobs:
 
       - name: Generate PNG app icons from the existing favicon
         run: |
-          mkdir -p icons
-          convert -background none favicon.svg -resize 192x192 icons/icon-192.png
-          convert -background none favicon.svg -resize 512x512 icons/icon-512.png
-          convert -background none favicon.svg -resize 512x512 icons/icon-512-maskable.png
+          npm init -y >/dev/null 2>&1
+          npm install --no-save sharp@0.33.5 >/dev/null 2>&1
+          node - <<'NODE'
+          const sharp = require('sharp');
+          const fs = require('fs');
+          fs.mkdirSync('icons', { recursive: true });
+          const input = 'favicon.svg';
+          Promise.all([
+            sharp(input).resize(192, 192, { fit: 'contain' }).png().toFile('icons/icon-192.png'),
+            sharp(input).resize(512, 512, { fit: 'contain' }).png().toFile('icons/icon-512.png'),
+            sharp(input).resize(512, 512, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } }).png().toFile('icons/icon-512-maskable.png')
+          ]).catch(err => { console.error(err); process.exit(1); });
+          NODE
 
       - name: Commit generated icons
         run: |
