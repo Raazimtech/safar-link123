@@ -5,6 +5,8 @@
     window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;
 
+  const isOpera = /OPR\//i.test(navigator.userAgent);
+
   const addButton = () => {
     if (isInstalled() || document.getElementById('installApp')) return;
     const host = document.querySelector('.topbar');
@@ -16,21 +18,26 @@
     button.textContent = 'Install app';
     button.style.cssText = 'margin-left:auto;white-space:nowrap;padding:9px 12px;border-radius:10px;';
     button.onclick = async () => {
-      if (!deferredPrompt) {
-        toastInstallHint();
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        button.remove();
         return;
       }
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      button.remove();
+      toastInstallHint();
     };
     host.appendChild(button);
   };
 
   const toastInstallHint = () => {
     const box = document.getElementById('toast');
-    if (box) box.innerHTML = '<div class="toast">Use your browser menu and choose “Install app” or “Add to Home screen”.</div>';
+    if (!box) return;
+    const message = isOpera
+      ? 'Opera does not expose the install prompt here. Open Opera menu ⋮ and choose “Add to Home screen” or “Install”.'
+      : 'Your browser does not expose the install prompt. Open the browser menu and choose “Install app” or “Add to Home screen”.';
+    box.innerHTML = `<div class="toast">${message}</div>`;
+    setTimeout(() => { if (box) box.innerHTML = ''; }, 5000);
   };
 
   window.addEventListener('beforeinstallprompt', event => {
